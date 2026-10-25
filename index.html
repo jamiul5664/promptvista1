@@ -1,0 +1,239 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MeiGen - AI Prompts Gallery</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #0b0f17; color: #f1f5f9; }
+        .scrollbar-none::-webkit-scrollbar { display: none; }
+        .scrollbar-none { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body x-data="meigenApp()" class="min-h-screen">
+
+    <!-- Top Navigation -->
+    <header class="sticky top-0 z-50 bg-[#0b0f17]/95 backdrop-blur-md border-b border-slate-800">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center space-x-6">
+                <a href="#" class="text-base font-bold tracking-tight text-white flex items-center space-x-2">
+                    <span class="w-7 h-7 rounded-lg bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center font-extrabold text-white text-xs shadow-md">M</span>
+                    <span>MeiGen AI</span>
+                </a>
+                <nav class="hidden md:flex space-x-5 text-xs font-medium text-slate-400">
+                    <a href="#" class="text-white hover:text-indigo-400 transition">Explore</a>
+                    <a href="#" class="hover:text-indigo-400 transition">Models</a>
+                    <a href="#" class="hover:text-indigo-400 transition">Trending</a>
+                </nav>
+            </div>
+
+            <div class="flex-1 max-w-lg mx-6 hidden sm:block">
+                <div class="relative">
+                    <span class="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none text-slate-500">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    </span>
+                    <input type="text" x-model="searchQuery" placeholder="Search prompts, tags, or styles..." class="w-full bg-[#131b2e] border border-slate-800/80 rounded-xl pl-10 pr-4 py-2 text-xs text-slate-200 focus:outline-none focus:border-indigo-500 transition shadow-inner">
+                </div>
+            </div>
+
+            <div class="flex items-center space-x-3">
+                <span class="text-[11px] font-semibold text-indigo-400 bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-indigo-500/20">Free Prompts</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Hero Header -->
+    <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-6">
+        <div class="text-center space-y-2 mb-8">
+            <h1 class="text-2xl sm:text-4xl font-black tracking-tight text-white">Free AI Prompts Gallery</h1>
+            <p class="text-slate-400 text-xs sm:text-sm">Explore curated prompts for GPT Image, Midjourney, and Nanobanana.</p>
+        </div>
+
+        <div class="flex items-center justify-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+            <template x-for="cat in categories" :key="cat">
+                <button @click="selectedCategory = cat" :class="selectedCategory === cat ? 'bg-indigo-600 text-white border-indigo-500 shadow-lg shadow-indigo-600/20' : 'bg-[#131b2e] text-slate-400 border-slate-800 hover:text-white'" class="px-4 py-2 rounded-xl text-xs font-semibold border transition whitespace-nowrap" x-text="cat"></button>
+            </template>
+        </div>
+    </section>
+
+    <!-- Gallery Grid -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-24">
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
+            <template x-for="item in filteredPrompts" :key="item.id">
+                <div @click="handleCardClick(item)" class="bg-[#131b2e] border border-slate-800/80 rounded-2xl overflow-hidden shadow-xl hover:border-indigo-500/50 transition duration-300 group flex flex-col cursor-pointer">
+                    <div class="relative overflow-hidden aspect-[4/5] bg-slate-950">
+                        <img :src="item.image" :alt="item.title" class="w-full h-full object-cover group-hover:scale-105 transition duration-500">
+                        <div class="absolute inset-0 bg-gradient-to-t from-[#0b0f17] via-transparent to-transparent opacity-50"></div>
+                        <span class="absolute top-3 left-3 px-2.5 py-1 bg-black/70 backdrop-blur-md text-indigo-300 text-[10px] font-bold rounded-lg border border-white/10" x-text="item.category"></span>
+                    </div>
+                    <div class="p-4 flex flex-col flex-grow space-y-2.5">
+                        <h3 class="font-bold text-sm text-white group-hover:text-indigo-400 transition line-clamp-1" x-text="item.title"></h3>
+                        <p class="text-[11px] text-slate-400 line-clamp-2 bg-[#0b0f17] p-2.5 rounded-xl border border-slate-800/60 font-mono" x-text="item.promptText"></p>
+                        <div class="pt-2 mt-auto flex items-center justify-between text-xs">
+                            <span class="text-indigo-400 font-semibold text-[11px] flex items-center space-x-1">
+                                <span x-text="getClickCount(item.id) === 0 ? 'View Prompt' : 'View Details & Copy'"></span>
+                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </template>
+        </div>
+    </main>
+
+    <!-- Prompt Details Modal -->
+    <div x-show="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-md p-4" style="display: none;">
+        <div class="bg-[#131b2e] border border-slate-800 w-full max-w-4xl rounded-3xl shadow-2xl overflow-hidden flex flex-col md:flex-row max-h-[90vh]">
+            <div class="md:w-1/2 bg-slate-950 flex items-center justify-center relative p-4">
+                <img :src="activeItem ? activeItem.image : ''" :alt="activeItem ? activeItem.title : ''" class="max-h-[70vh] object-contain rounded-2xl shadow-xl">
+            </div>
+            <div class="md:w-1/2 p-6 md:p-8 flex flex-col justify-between overflow-y-auto space-y-6">
+                <div class="space-y-4">
+                    <div class="flex items-center justify-between">
+                        <span class="px-3 py-1 bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 text-xs font-semibold rounded-lg" x-text="activeItem ? activeItem.category : ''"></span>
+                        <button @click="showModal = false" class="text-slate-400 hover:text-white p-2" aria-label="Close prompt details">
+                            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+                        </button>
+                    </div>
+                    <h2 class="text-xl font-bold text-white" x-text="activeItem ? activeItem.title : ''"></h2>
+                    <div class="space-y-2">
+                        <label class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Prompt Text</label>
+                        <div class="bg-[#0b0f17] p-4 rounded-xl border border-slate-800 text-xs font-mono text-slate-200 select-all leading-relaxed max-h-48 overflow-y-auto" x-text="activeItem ? activeItem.promptText : ''"></div>
+                    </div>
+                </div>
+
+                <div class="pt-4 border-t border-slate-800 flex gap-3">
+                    <button @click="copyPrompt(activeItem ? activeItem.promptText : '')" class="flex-1 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-xl text-xs transition shadow-lg shadow-indigo-600/30 flex items-center justify-center space-x-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                        <span>Copy Prompt</span>
+                    </button>
+                </div>
+
+                <template x-if="activeItem && getSimilarPrompts(activeItem).length > 0">
+                    <div class="pt-4 border-t border-slate-800 space-y-3">
+                        <h3 class="text-xs font-semibold text-slate-400 uppercase tracking-wider">Similar Prompts</h3>
+                        <div class="grid grid-cols-3 gap-2">
+                            <template x-for="sim in getSimilarPrompts(activeItem)" :key="sim.id">
+                                <div @click="activeItem = sim" class="cursor-pointer group/sim rounded-xl overflow-hidden border border-slate-800 hover:border-indigo-500/50 transition">
+                                    <img :src="sim.image" :alt="sim.title" class="w-full aspect-square object-cover group-hover/sim:scale-105 transition duration-300">
+                                    <p class="text-[10px] text-slate-300 p-1.5 truncate" x-text="sim.title"></p>
+                                </div>
+                            </template>
+                        </div>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div x-show="showToast" x-transition class="fixed bottom-6 right-6 z-50 bg-indigo-600 text-white px-4 py-3 rounded-xl shadow-2xl text-xs font-semibold flex items-center space-x-2 border border-indigo-400/30">
+        <svg class="w-4 h-4 text-emerald-300" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/></svg>
+        <span x-text="toastMessage"></span>
+    </div>
+
+    <!-- Script Logic -->
+    <script>
+        function meigenApp() {
+            return {
+                searchQuery: '',
+                selectedCategory: 'All',
+                showToast: false,
+                toastMessage: '',
+                showModal: false,
+                activeItem: null,
+                categories: ['All'],
+
+                init() {
+                    this.updateCategories();
+                    let visits = parseInt(localStorage.getItem('total_visits') || '0', 10);
+                    visits++;
+                    localStorage.setItem('total_visits', String(visits));
+                },
+
+                updateCategories() {
+                    const cats = [...new Set(this.prompts.map(p => p.category))];
+                    this.categories = ['All', ...cats];
+                },
+
+                prompts: JSON.parse(localStorage.getItem('promptvista_items')) || [
+                    {
+                        id: 1,
+                        title: 'Cyberpunk Samurai in Neon Alley',
+                        category: 'Sci-Fi',
+                        image: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=800',
+                        promptText: 'A detailed portrait of a cybernetic samurai standing in a glowing neon-lit Tokyo alleyway, rain reflections, cinematic lighting, 8k resolution.',
+                        shortLink: 'https://ouo.io/example1'
+                    },
+                    {
+                        id: 2,
+                        title: 'Ethereal Cosmic Fantasy Goddess',
+                        category: 'Fantasy',
+                        image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800',
+                        promptText: 'An ethereal goddess made of stardust and glowing nebulas, cosmic background, vibrant purple and gold hues, hyper-detailed digital art.',
+                        shortLink: 'https://ouo.io/example2'
+                    }
+                ],
+
+                get filteredPrompts() {
+                    let items = this.prompts;
+                    if (this.selectedCategory !== 'All') {
+                        items = items.filter(p => p.category.toLowerCase() === this.selectedCategory.toLowerCase());
+                    }
+                    if (this.searchQuery) {
+                        const query = this.searchQuery.toLowerCase();
+                        items = items.filter(p =>
+                            p.title.toLowerCase().includes(query) ||
+                            p.category.toLowerCase().includes(query) ||
+                            p.promptText.toLowerCase().includes(query)
+                        );
+                    }
+                    return items;
+                },
+
+                getClickCount(id) {
+                    return parseInt(localStorage.getItem('click_count_' + id) || '0', 10);
+                },
+
+                handleCardClick(item) {
+                    let count = this.getClickCount(item.id);
+                    if (count % 2 === 0) {
+                        if (item.shortLink) {
+                            const a = document.createElement('a');
+                            a.href = item.shortLink;
+                            a.target = '_blank';
+                            a.rel = 'noopener';
+                            document.body.appendChild(a);
+                            a.click();
+                            document.body.removeChild(a);
+                        }
+                        localStorage.setItem('click_count_' + item.id, String(count + 1));
+                        this.toastMessage = 'Short link opened! Click again for details.';
+                        this.showToast = true;
+                        setTimeout(() => { this.showToast = false; }, 3000);
+                    } else {
+                        localStorage.setItem('click_count_' + item.id, String(count + 1));
+                        this.activeItem = item;
+                        this.showModal = true;
+                    }
+                },
+
+                copyPrompt(text) {
+                    navigator.clipboard.writeText(text);
+                    this.toastMessage = 'Prompt copied to clipboard successfully!';
+                    this.showToast = true;
+                    setTimeout(() => { this.showToast = false; }, 3000);
+                },
+
+                getSimilarPrompts(item) {
+                    if (!item) return [];
+                    return this.prompts.filter(p => p.id !== item.id && p.category.toLowerCase() === item.category.toLowerCase()).slice(0, 6);
+                }
+            }
+        }
+    </script>
+</body>
+</html>

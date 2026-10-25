@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - PromptVista & Traffic</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body class="bg-gray-950 text-gray-100 font-sans" x-data="adminApp()">
+
+    <div class="max-w-4xl mx-auto px-4 py-12 space-y-8">
+        <div>
+            <h1 class="text-2xl font-bold mb-1 bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">Admin Dashboard</h1>
+            <p class="text-gray-400 text-sm">Manage prompts, short links, and view website traffic</p>
+        </div>
+
+        <!-- Traffic Stats Cards -->
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Total Website Visits</p>
+                    <h3 class="text-3xl font-extrabold text-purple-400 mt-1" x-text="totalVisits"></h3>
+                </div>
+                <div class="w-12 h-12 bg-purple-950/50 rounded-xl flex items-center justify-center border border-purple-800/50">
+                    <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                </div>
+            </div>
+
+            <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Total Prompts</p>
+                    <h3 class="text-3xl font-extrabold text-pink-400 mt-1" x-text="prompts.length"></h3>
+                </div>
+                <div class="w-12 h-12 bg-pink-950/50 rounded-xl flex items-center justify-center border border-pink-800/50">
+                    <svg class="w-6 h-6 text-pink-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+                </div>
+            </div>
+
+            <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Categories</p>
+                    <h3 class="text-3xl font-extrabold text-emerald-400 mt-1" x-text="uniqueCategories.length"></h3>
+                </div>
+                <div class="w-12 h-12 bg-emerald-950/50 rounded-xl flex items-center justify-center border border-emerald-800/50">
+                    <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
+                </div>
+            </div>
+        </div>
+
+        <!-- Add Form with Image Upload & Auto Category -->
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
+            <h2 class="text-lg font-semibold text-purple-400">Add New Prompt & Image Upload</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <input x-model="newTitle" type="text" placeholder="Prompt Title" class="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-purple-500">
+                
+                <!-- Auto Category with manual override -->
+                <div class="relative">
+                    <input x-model="newCategory" type="text" placeholder="Category (auto-detected)" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-purple-500 pr-20">
+                    <span x-show="autoDetected" class="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-md border border-emerald-500/20">AUTO</span>
+                </div>
+            </div>
+
+            <!-- Image File Upload Input -->
+            <div class="space-y-1.5">
+                <label class="text-xs font-semibold text-gray-400">Upload Image from Device</label>
+                <input type="file" accept="image/*" @change="handleImageUpload($event)" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm text-gray-300 file:mr-4 file:py-1 file:px-3 file:rounded-md file:border-0 file:text-xs file:font-semibold file:bg-purple-600 file:text-white hover:file:bg-purple-700 cursor-pointer">
+            </div>
+
+            <!-- Image Preview -->
+            <template x-if="newImage">
+                <div class="mt-2 flex items-center space-x-4">
+                    <div>
+                        <p class="text-xs text-gray-400 mb-1">Preview:</p>
+                        <img :src="newImage" class="w-24 h-24 object-cover rounded-lg border border-gray-700">
+                    </div>
+                    <div x-show="detectedFileName" class="text-xs text-gray-400">
+                        <p>File: <span class="text-white" x-text="detectedFileName"></span></p>
+                        <p x-show="autoDetected">Detected: <span class="text-emerald-400 font-semibold" x-text="newCategory"></span></p>
+                    </div>
+                </div>
+            </template>
+
+            <textarea x-model="newPromptText" rows="3" placeholder="Full Prompt Text" @input="autoDetectFromPrompt()" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-purple-500"></textarea>
+            <input x-model="newShortLink" type="text" placeholder="Ouo.io Short Link (e.g. https://ouo.io/abc123)" class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-purple-500">
+
+            <button @click="addPrompt" class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition">Save Prompt</button>
+        </div>
+
+        <!-- Manage List -->
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-6">
+            <h2 class="text-lg font-semibold mb-4">Manage Prompts (<span x-text="prompts.length"></span>)</h2>
+            <div class="space-y-3">
+                <template x-for="item in prompts" :key="item.id">
+                    <div class="flex items-center justify-between bg-gray-800 p-4 rounded-lg border border-gray-700">
+                        <div class="flex items-center space-x-3">
+                            <img :src="item.image" class="w-12 h-12 rounded-lg object-cover">
+                            <div>
+                                <p class="text-sm font-medium text-white" x-text="item.title"></p>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-[10px] font-semibold text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20" x-text="item.category"></span>
+                                    <span class="text-xs text-gray-500" x-text="item.shortLink || 'No link'"></span>
+                                </div>
+                            </div>
+                        </div>
+                        <button @click="deletePrompt(item.id)" class="px-4 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-semibold rounded-lg transition">Delete</button>
+                    </div>
+                </template>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function adminApp() {
+            // ক্যাটাগরি কীওয়ার্ড ম্যাপ — ফাইলের নাম ও প্রম্পট টেক্সট থেকে অটো ডিটেক্ট
+            const categoryKeywords = {
+                'Sci-Fi': ['cyberpunk', 'scifi', 'sci-fi', 'futuristic', 'neon', 'robot', 'mech', 'space', 'spaceship', 'alien', 'dystopia', 'cyber', 'tech', 'hologram', 'matrix', 'android', 'laser'],
+                'Fantasy': ['fantasy', 'dragon', 'magic', 'wizard', 'fairy', 'elf', 'castle', 'mythical', 'enchanted', 'sorcerer', 'medieval', 'kingdom', 'goddess', 'ethereal', 'celestial', 'cosmic', 'mystical'],
+                'Portrait': ['portrait', 'face', 'headshot', 'woman', 'man', 'girl', 'boy', 'person', 'beauty', 'model', 'closeup', 'close-up', 'selfie', 'realistic', 'photorealistic', 'human'],
+                'Anime': ['anime', 'manga', 'chibi', 'kawaii', 'waifu', 'otaku', 'naruto', 'ghibli', 'japanese', 'cel-shaded', 'cel shaded', 'cartoon', 'animated'],
+                'Poster': ['poster', 'movie', 'film', 'cinematic', 'banner', 'cover', 'album', 'flyer', 'advertisement', 'typography', 'retro', 'vintage'],
+                'Landscape': ['landscape', 'nature', 'mountain', 'ocean', 'sea', 'forest', 'sunset', 'sunrise', 'sky', 'river', 'lake', 'beach', 'desert', 'snow', 'winter', 'autumn', 'scenery', 'environment'],
+                'Architecture': ['architecture', 'building', 'house', 'city', 'urban', 'skyscraper', 'interior', 'room', 'modern', 'gothic', 'structure'],
+                'Abstract': ['abstract', 'geometric', 'pattern', 'fractal', 'surreal', 'psychedelic', 'trippy', 'minimal', 'minimalist', 'shapes', 'texture', 'gradient'],
+                'Animal': ['animal', 'cat', 'dog', 'bird', 'wolf', 'lion', 'tiger', 'horse', 'eagle', 'fox', 'bear', 'creature', 'wildlife', 'pet'],
+                'Food': ['food', 'cake', 'pizza', 'fruit', 'cooking', 'kitchen', 'recipe', 'delicious', 'meal', 'restaurant']
+            };
+
+            function detectCategory(fileName, promptText) {
+                const combined = (fileName + ' ' + promptText).toLowerCase();
+                let bestMatch = '';
+                let bestScore = 0;
+                for (const [cat, keywords] of Object.entries(categoryKeywords)) {
+                    let score = 0;
+                    for (const kw of keywords) {
+                        if (combined.includes(kw)) score++;
+                    }
+                    if (score > bestScore) {
+                        bestScore = score;
+                        bestMatch = cat;
+                    }
+                }
+                return bestScore > 0 ? bestMatch : '';
+            }
+
+            return {
+                totalVisits: localStorage.getItem('total_visits') || '0',
+                newTitle: '',
+                newCategory: '',
+                newImage: '',
+                newPromptText: '',
+                newShortLink: '',
+                autoDetected: false,
+                detectedFileName: '',
+                prompts: JSON.parse(localStorage.getItem('promptvista_items')) || [
+                    { id: 1, title: 'Cyberpunk Samurai', category: 'Sci-Fi', image: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=600', promptText: 'A cyberpunk samurai in neon Tokyo alley, rain reflections, 8k resolution.', shortLink: 'https://ouo.io/example1' }
+                ],
+
+                get uniqueCategories() {
+                    return [...new Set(this.prompts.map(p => p.category))];
+                },
+
+                handleImageUpload(event) {
+                    const file = event.target.files[0];
+                    if (file) {
+                        this.detectedFileName = file.name;
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            this.newImage = e.target.result;
+                        };
+                        reader.readAsDataURL(file);
+                        
+                        // ফাইলের নাম থেকে অটো ক্যাটাগরি ডিটেক্ট
+                        const detected = detectCategory(file.name, this.newPromptText);
+                        if (detected && !this.newCategory) {
+                            this.newCategory = detected;
+                            this.autoDetected = true;
+                        }
+                    }
+                },
+
+                autoDetectFromPrompt() {
+                    // প্রম্পট টেক্সট টাইপ করার সময়ও অটো ডিটেক্ট
+                    if (!this.newCategory || this.autoDetected) {
+                        const detected = detectCategory(this.detectedFileName || '', this.newPromptText);
+                        if (detected) {
+                            this.newCategory = detected;
+                            this.autoDetected = true;
+                        }
+                    }
+                },
+
+                addPrompt() {
+                    if (!this.newTitle || !this.newImage || !this.newPromptText) {
+                        alert('Please fill in title, upload an image, and enter prompt text!');
+                        return;
+                    }
+                    // ফাইনাল অটো ডিটেক্ট যদি এখনও ক্যাটাগরি খালি থাকে
+                    if (!this.newCategory) {
+                        const detected = detectCategory(this.detectedFileName || '', this.newPromptText);
+                        this.newCategory = detected || 'General';
+                    }
+                    
+                    const newItem = {
+                        id: Date.now(),
+                        title: this.newTitle,
+                        category: this.newCategory,
+                        image: this.newImage,
+                        promptText: this.newPromptText,
+                        shortLink: this.newShortLink || ''
+                    };
+                    this.prompts.unshift(newItem);
+                    localStorage.setItem('promptvista_items', JSON.stringify(this.prompts));
+                    
+                    this.newTitle = '';
+                    this.newCategory = '';
+                    this.newImage = '';
+                    this.newPromptText = '';
+                    this.newShortLink = '';
+                    this.autoDetected = false;
+                    this.detectedFileName = '';
+                    alert('Prompt added successfully!');
+                },
+
+                deletePrompt(id) {
+                    if (confirm('Are you sure you want to delete this prompt?')) {
+                        this.prompts = this.prompts.filter(p => p.id !== id);
+                        localStorage.setItem('promptvista_items', JSON.stringify(this.prompts));
+                    }
+                }
+            }
+        }
+    </script>
+</body>
+</html>
