@@ -41,6 +41,12 @@
 
             <div class="flex items-center space-x-3">
                 <span class="text-[11px] font-semibold text-indigo-400 bg-indigo-500/10 px-3 py-1.5 rounded-lg border border-indigo-500/20">Free Prompts</span>
+                
+                <!-- Traffic Counter Card -->
+                <div class="bg-indigo-500/10 border border-indigo-500/20 rounded-lg px-3 py-1.5 text-xs font-medium text-indigo-400">
+                    <svg class="w-3.5 h-3.5 inline mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"/></svg>
+                    <span x-text="totalVisits"></span> visits
+                </div>
             </div>
         </div>
     </header>
@@ -159,24 +165,7 @@
                     this.categories = ['All', ...cats];
                 },
 
-                prompts: JSON.parse(localStorage.getItem('promptvista_items')) || [
-                    {
-                        id: 1,
-                        title: 'Cyberpunk Samurai in Neon Alley',
-                        category: 'Sci-Fi',
-                        image: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=800',
-                        promptText: 'A detailed portrait of a cybernetic samurai standing in a glowing neon-lit Tokyo alleyway, rain reflections, cinematic lighting, 8k resolution.',
-                        shortLink: 'https://ouo.io/example1'
-                    },
-                    {
-                        id: 2,
-                        title: 'Ethereal Cosmic Fantasy Goddess',
-                        category: 'Fantasy',
-                        image: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800',
-                        promptText: 'An ethereal goddess made of stardust and glowing nebulas, cosmic background, vibrant purple and gold hues, hyper-detailed digital art.',
-                        shortLink: 'https://ouo.io/example2'
-                    }
-                ],
+                prompts: JSON.parse(localStorage.getItem('promptvista_items')) || [],
 
                 get filteredPrompts() {
                     let items = this.prompts;
@@ -232,6 +221,35 @@
                     if (!item) return [];
                     return this.prompts.filter(p => p.id !== item.id && p.category.toLowerCase() === item.category.toLowerCase()).slice(0, 6);
                 }
+            }
+            // Live Traffic Counter
+            init() {
+                this.updateCategories();
+                let visits = parseInt(localStorage.getItem('total_visits') || '0', 10);
+                visits++;
+                localStorage.setItem('total_visits', String(visits));
+
+                // Live user tracking
+                const usersKey = 'live_users';
+                const userId = localStorage.getItem('user_id');
+                if (!userId) {
+                    const newId = 'user_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                    localStorage.setItem('user_id', newId);
+                }
+                let activeUsers = JSON.parse(localStorage.getItem(usersKey) || '[]');
+                if (!activeUsers.includes(localStorage.getItem('user_id'))) {
+                    activeUsers.push(localStorage.getItem('user_id'));
+                }
+                localStorage.setItem(usersKey, JSON.stringify(activeUsers));
+
+                // Remove user on page unload
+                const originalUnload = window.onbeforeunload;
+                window.onbeforeunload = function() {
+                    if (originalUnload) originalUnload.call(this);
+                    let users = JSON.parse(localStorage.getItem(usersKey) || '[]');
+                    users = users.filter(id => id !== localStorage.getItem('user_id'));
+                    localStorage.setItem(usersKey, JSON.stringify(users));
+                };
             }
         }
     </script>

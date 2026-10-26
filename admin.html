@@ -10,10 +10,39 @@
 </head>
 <body class="bg-gray-950 text-gray-100 font-sans" x-data="adminApp()">
 
-    <div class="max-w-4xl mx-auto px-4 py-12 space-y-8">
-        <div>
-            <h1 class="text-2xl font-bold mb-1 bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">Admin Dashboard</h1>
-            <p class="text-gray-400 text-sm">Manage prompts, short links, and view website traffic</p>
+    <!-- Login Screen -->
+    <div x-show="!isLoggedIn" class="fixed inset-0 z-50 flex items-center justify-center bg-black/95">
+        <div class="bg-gray-900 border border-gray-800 rounded-2xl p-8 w-full max-w-md mx-4">
+            <div class="text-center mb-8">
+                <h1 class="text-2xl font-bold bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">Admin Login</h1>
+                <p class="text-gray-400 text-sm mt-1">Enter password to access dashboard</p>
+            </div>
+            <div class="space-y-4">
+                <input 
+                    type="password" 
+                    x-model="loginPassword" 
+                    @keyup.enter="checkLogin" 
+                    placeholder="Password" 
+                    class="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-sm focus:outline-none focus:border-purple-500"
+                    autofocus
+                >
+                <p x-show="loginError" class="text-red-400 text-sm text-center">Incorrect password</p>
+                <button @click="checkLogin" class="w-full py-3 bg-purple-600 hover:bg-purple-700 text-white font-semibold rounded-lg transition">Login</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Dashboard (shown after login) -->
+    <div x-show="isLoggedIn" class="max-w-4xl mx-auto px-4 py-12 space-y-8">
+        <div class="flex items-center justify-between">
+            <div>
+                <h1 class="text-2xl font-bold mb-1 bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent">Admin Dashboard</h1>
+                <p class="text-gray-400 text-sm">Manage prompts, short links, and view website traffic</p>
+            </div>
+            <button @click="logout" class="px-4 py-2 bg-gray-800 hover:bg-gray-700 text-white text-sm font-semibold rounded-lg transition flex items-center space-x-2">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/></svg>
+                <span>Logout</span>
+            </button>
         </div>
 
         <!-- Traffic Stats Cards -->
@@ -25,6 +54,16 @@
                 </div>
                 <div class="w-12 h-12 bg-purple-950/50 rounded-xl flex items-center justify-center border border-purple-800/50">
                     <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"/></svg>
+                </div>
+            </div>
+            
+            <div class="bg-gray-900 border border-gray-800 rounded-xl p-5 flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-400 uppercase tracking-wider font-semibold">Live Active Users</p>
+                    <h3 class="text-3xl font-extrabold text-emerald-400 mt-1" x-text="liveUsers"></h3>
+                </div>
+                <div class="w-12 h-12 bg-emerald-950/50 rounded-xl flex items-center justify-center border border-emerald-800/50">
+                    <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.5C7 4.5 3 7.5 3 12c0 4.5 3.5 8 8 8 4.5 0 8-3.5 8-8 0-4.5-4-7.5-8-7.5zm0 13.5c-3 0-5.5-2-5.5-4.5S9 9 12 9s5.5 2 5.5 4.5-2.5 4.5-5.5 4.5z"/></svg>
                 </div>
             </div>
 
@@ -47,6 +86,22 @@
                     <svg class="w-6 h-6 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z"/></svg>
                 </div>
             </div>
+        </div>
+
+        <!-- Change Password Section -->
+        <div class="bg-gray-900 border border-gray-800 rounded-xl p-6 space-y-4">
+            <h2 class="text-lg font-semibold text-purple-400 flex items-center space-x-2">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                <span>Change Password</span>
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <input x-model="currentPassword" type="password" placeholder="Current Password" class="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-purple-500">
+                <input x-model="newPassword" type="password" placeholder="New Password" class="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-purple-500">
+                <input x-model="confirmPassword" type="password" placeholder="Confirm New Password" class="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2.5 text-sm focus:outline-none focus:border-purple-500">
+            </div>
+            <p x-show="passwordError" class="text-red-400 text-sm" x-text="passwordError"></p>
+            <p x-show="passwordSuccess" class="text-emerald-400 text-sm" x-text="passwordSuccess"></p>
+            <button @click="changePassword" class="w-full py-3 bg-emerald-600 hover:bg-emerald-700 text-white font-semibold rounded-lg transition">Update Password</button>
         </div>
 
         <!-- Add Form with Image Upload & Auto Category -->
@@ -114,7 +169,7 @@
 
     <script>
         function adminApp() {
-            // ক্যাটাগরি কীওয়ার্ড ম্যাপ — ফাইলের নাম ও প্রম্পট টেক্সট থেকে অটো ডিটেক্ট
+            // ক্যাটাগরি কীওয়ার্ড ম্যাপ
             const categoryKeywords = {
                 'Sci-Fi': ['cyberpunk', 'scifi', 'sci-fi', 'futuristic', 'neon', 'robot', 'mech', 'space', 'spaceship', 'alien', 'dystopia', 'cyber', 'tech', 'hologram', 'matrix', 'android', 'laser'],
                 'Fantasy': ['fantasy', 'dragon', 'magic', 'wizard', 'fairy', 'elf', 'castle', 'mythical', 'enchanted', 'sorcerer', 'medieval', 'kingdom', 'goddess', 'ethereal', 'celestial', 'cosmic', 'mystical'],
@@ -146,7 +201,20 @@
             }
 
             return {
+                // Login state
+                isLoggedIn: localStorage.getItem('admin_logged_in') === 'true',
+                loginPassword: '',
+                loginError: false,
+                
+                // Password change
+                currentPassword: '',
+                newPassword: '',
+                confirmPassword: '',
+                passwordError: '',
+                passwordSuccess: '',
+
                 totalVisits: localStorage.getItem('total_visits') || '0',
+                liveUsers: 0,
                 newTitle: '',
                 newCategory: '',
                 newImage: '',
@@ -154,12 +222,56 @@
                 newShortLink: '',
                 autoDetected: false,
                 detectedFileName: '',
-                prompts: JSON.parse(localStorage.getItem('promptvista_items')) || [
-                    { id: 1, title: 'Cyberpunk Samurai', category: 'Sci-Fi', image: 'https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=600', promptText: 'A cyberpunk samurai in neon Tokyo alley, rain reflections, 8k resolution.', shortLink: 'https://ouo.io/example1' }
-                ],
+                prompts: JSON.parse(localStorage.getItem('promptvista_items')) || [],
 
                 get uniqueCategories() {
                     return [...new Set(this.prompts.map(p => p.category))];
+                },
+
+                checkLogin() {
+                    const storedPassword = localStorage.getItem('admin_password') || 'admin123';
+                    if (this.loginPassword === storedPassword) {
+                        this.isLoggedIn = true;
+                        localStorage.setItem('admin_logged_in', 'true');
+                        this.loginError = false;
+                        this.loginPassword = '';
+                    } else {
+                        this.loginError = true;
+                    }
+                },
+
+                logout() {
+                    this.isLoggedIn = false;
+                    localStorage.removeItem('admin_logged_in');
+                },
+
+                changePassword() {
+                    const storedPassword = localStorage.getItem('admin_password') || 'admin123';
+                    
+                    if (this.currentPassword !== storedPassword) {
+                        this.passwordError = 'Current password is incorrect';
+                        this.passwordSuccess = '';
+                        return;
+                    }
+                    if (!this.newPassword || this.newPassword.length < 4) {
+                        this.passwordError = 'New password must be at least 4 characters';
+                        this.passwordSuccess = '';
+                        return;
+                    }
+                    if (this.newPassword !== this.confirmPassword) {
+                        this.passwordError = 'New passwords do not match';
+                        this.passwordSuccess = '';
+                        return;
+                    }
+                    
+                    localStorage.setItem('admin_password', this.newPassword);
+                    this.passwordSuccess = 'Password updated successfully!';
+                    this.passwordError = '';
+                    this.currentPassword = '';
+                    this.newPassword = '';
+                    this.confirmPassword = '';
+                    
+                    setTimeout(() => { this.passwordSuccess = ''; }, 3000);
                 },
 
                 handleImageUpload(event) {
@@ -228,6 +340,30 @@
                     if (confirm('Are you sure you want to delete this prompt?')) {
                         this.prompts = this.prompts.filter(p => p.id !== id);
                         localStorage.setItem('promptvista_items', JSON.stringify(this.prompts));
+                    }
+                },
+                
+                init() {
+                    // Live user tracking
+                    const usersKey = 'live_users';
+                    let users = JSON.parse(localStorage.getItem(usersKey) || '[]');
+                    this.liveUsers = users.length;
+                    
+                    // Update live users periodically
+                    setInterval(() => {
+                        users = JSON.parse(localStorage.getItem(usersKey) || '[]');
+                        this.liveUsers = users.length;
+                    }, 2000);
+                    
+                    // Load default prompts if localStorage is empty
+                    if (!localStorage.getItem('promptvista_items')) {
+                        fetch('promptvista_data.json')
+                            .then(response => response.json())
+                            .then(data => {
+                                this.prompts = data;
+                                localStorage.setItem('promptvista_items', JSON.stringify(data));
+                            })
+                            .catch(err => console.log('Using fallback prompts:', err));
                     }
                 }
             }
